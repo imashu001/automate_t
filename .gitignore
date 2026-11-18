@@ -1,2 +1,9 @@
 /.env
 **/__pycache__
+venv/
+.venv/
+*.py[cod]
+stock_errors.log
+telegram_errors.log
+stock_log.txt
+.pytest_cache/
