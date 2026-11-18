@@ -1,6 +1,7 @@
 """Application entry point for the Screener stock alert."""
 
 import logging
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -12,17 +13,20 @@ from utility_fcn.utility_telegram import (
 )
 
 LOGGER = logging.getLogger(__name__)
-LOG_FILE = "stock_errors.log"
+LOG_FILE = Path(__file__).resolve().parent / "stock_errors.log"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
 
 def configure_logging() -> None:
     """Configure application-wide file logging."""
     logging.basicConfig(
-        filename=LOG_FILE,
         level=logging.INFO,
         format=LOG_FORMAT,
-        encoding="utf-8",
+        handlers=[
+            logging.FileHandler(LOG_FILE, encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+        force=True,
     )
 
 

@@ -9,7 +9,12 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import requests
 
-from utility_fcn.utility_stocks import fetch_screen_stocks, parse_stock_table
+from utility_fcn.utility_stocks import (
+    DEFAULT_SCREEN_URL,
+    fetch_screen_stocks,
+    get_screen_url,
+    parse_stock_table,
+)
 from utility_fcn.utility_telegram import (
     STOCK_COLUMNS,
     chunk_message,
@@ -40,6 +45,19 @@ def make_stock_table() -> pd.DataFrame:
 
 
 class ScreenerParsingTests(unittest.TestCase):
+    @patch.dict(os.environ, {}, clear=True)
+    def test_screen_url_defaults_to_momentum_screen(self) -> None:
+        self.assertEqual(get_screen_url(), DEFAULT_SCREEN_URL)
+
+    @patch.dict(os.environ, {"SCREENER_SCREEN_URL": "https://example.com/custom"})
+    def test_screen_url_uses_environment_override(self) -> None:
+        self.assertEqual(get_screen_url(), "https://example.com/custom")
+
+    @patch.dict(os.environ, {"SCREENER_SCREEN_URL": "  "})
+    def test_screen_url_rejects_empty_environment_override(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must not be empty"):
+            get_screen_url()
+
     def test_parse_stock_table_returns_largest_table(self) -> None:
         html = """
         <table><tr><th>Note</th></tr><tr><td>Small</td></tr></table>
@@ -59,6 +77,7 @@ class ScreenerParsingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "readable table"):
             parse_stock_table("<html><body>No stock table</body></html>")
 
+    @patch.dict(os.environ, {"SCREENER_SCREEN_URL": "https://example.com/screen"})
     @patch("utility_fcn.utility_stocks.requests.get")
     def test_fetch_screen_stocks_checks_response_and_parses_html(
         self, get: Mock
@@ -72,6 +91,11 @@ class ScreenerParsingTests(unittest.TestCase):
 
         stocks = fetch_screen_stocks()
 
+        get.assert_called_once_with(
+            "https://example.com/screen",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=30,
+        )
         response.raise_for_status.assert_called_once_with()
         self.assertEqual(stocks.iloc[0]["Company"], "Example Ltd.")
 

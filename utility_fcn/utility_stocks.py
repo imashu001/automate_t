@@ -1,6 +1,7 @@
 """Helpers for fetching stock data from the configured Screener screen."""
 
 import logging
+import os
 from io import StringIO
 
 import pandas as pd
@@ -8,9 +9,17 @@ import requests
 
 LOGGER = logging.getLogger(__name__)
 
-SCREEN_URL = "https://www.screener.in/screens/3766436/momentum/"
+DEFAULT_SCREEN_URL = "https://www.screener.in/screens/3766436/momentum/"
 REQUEST_HEADERS = {"User-Agent": "Mozilla/5.0"}
 REQUEST_TIMEOUT_SECONDS = 30
+
+
+def get_screen_url() -> str:
+    """Return the configured Screener URL or the project's default screen."""
+    screen_url = os.getenv("SCREENER_SCREEN_URL", DEFAULT_SCREEN_URL).strip()
+    if not screen_url:
+        raise ValueError("SCREENER_SCREEN_URL must not be empty.")
+    return screen_url
 
 
 def parse_stock_table(html: str) -> pd.DataFrame:
@@ -33,7 +42,7 @@ def parse_stock_table(html: str) -> pd.DataFrame:
 def fetch_screen_stocks() -> pd.DataFrame:
     """Fetch and parse the stock table returned by the configured Screener screen."""
     response = requests.get(
-        SCREEN_URL,
+        get_screen_url(),
         headers=REQUEST_HEADERS,
         timeout=REQUEST_TIMEOUT_SECONDS,
     )

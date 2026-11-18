@@ -43,6 +43,7 @@ Edit `.env` and set your Telegram credentials:
 ```dotenv
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
+SCREENER_SCREEN_URL=https://www.screener.in/screens/3766436/momentum/
 ```
 
 Create a bot with Telegram's BotFather, then make sure the bot can send
@@ -91,16 +92,18 @@ python -m unittest discover -s tests -v
 
 ## Configuration and operational notes
 
-- The Screener screen URL, request headers, and request timeout are constants
-  in `utility_fcn/utility_stocks.py`.
+- `SCREENER_SCREEN_URL` selects the Screener screen. If unset, the application
+  uses the momentum screen URL shown in `.env.example`.
+- Screener request headers and the request timeout are constants in
+  `utility_fcn/utility_stocks.py`.
 - Telegram credentials are read from the process environment when a message
   is sent. `main.py` loads `.env` at startup.
 - Telegram sends are retried up to three times, with a ten-second pause
   between attempts. Messages are divided into chunks of at most 3,500
   characters.
-- Application errors are written to `stock_errors.log`. The batch launcher
-  separately captures console output in `stock_log.txt`. Both files are
-  ignored by Git.
+- Application logs are written to the terminal and to `stock_errors.log`
+  beside `main.py`. The batch launcher also captures terminal output in
+  `stock_log.txt`. All three files are ignored by Git.
 - The screen's HTML structure or column names may change. If they do, table
   parsing or notification formatting will report an error rather than sending
   a partial stock summary.
